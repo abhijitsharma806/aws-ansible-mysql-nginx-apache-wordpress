@@ -1,5 +1,6 @@
 
->>> Install and Configure AWS(EC2-VPC)-MySQL-Nginx-Apache-Wordpress by Ansible <<<
+Install and Configure AWS(EC2-VPC)-MySQL-Nginx-Apache-Wordpress by Ansible
+==========================================================================
 
 1. Setup VPC (172.16.0.0/16) and two subnets, one public (172.16.0.0/24) and one private (172.16.1.0/24).
 
@@ -23,10 +24,10 @@ Install below Softwares before run the playbook in Local Ansible System.
 * Repo = epel-release (https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm)
 * Softwares
   ---------
-  python-pip
-  boto
-  AWS-CLI
-  ansible
+  - python-pip
+  - boto
+  - AWS-CLI
+  - ansible
 
 Directory and File Location Details in My Local Ansible System.
 ===========================================================
@@ -96,8 +97,8 @@ Role Variables
 
 * To know more about variables please check the "roles/<role name>/default/main.yml" or "roles/<role name>/vars/main.yml"
 
-######   HOW TO RUN THE PLAYBOOK? ######
-========================================
+HOW TO RUN THE PLAYBOOK?
+========================
 
 * In this ansible my main playbook name is "aws-ansible.yml", located in "/etc/ansible/aws-ansible.yml"
 * I have devided my main playbook to 4 sections.
@@ -186,13 +187,9 @@ Role Variables
     - This role will install the php, php-mbstring and required Wordpress softwares in apache1 server. After complete           of installation it also configure the Wordpress in apache2.
     - In this wordpress installation we are not creating the wordpress user, because it is a slave readonly server.
     - After start the MySQL slave replication service it will read the data from own db.
-  
-====================================
-----------IMPORTANT----------------
-INCASE OF IF YOU ARE UNABLE TO COMPLETE THE ABOVE ROLES DUE TO SOME REASON,
-PLEASE DELETE ALL THE CREATED VPC AND EC2 INSTANCES BEFORE RUN THE PLAYBOOK AGAIN
-----------IMPORTANT---------------
-==================================
+
+INCASE OF IF YOU ARE UNABLE TO COMPLETE THE ABOVE ROLES DUE TO SOME REASON, PLEASE DELETE ALL THE CREATED VPC AND EC2 INSTANCES BEFORE RUN THE PLAYBOOK AGAIN
+========
 * If you got any error please delete everything and run it from scratch.
 * Delete newly Created EC2, VPC, and remove the existing entries from below files.
 * Please verify that all the files have proper entries.
@@ -211,7 +208,8 @@ PLEASE DELETE ALL THE CREATED VPC AND EC2 INSTANCES BEFORE RUN THE PLAYBOOK AGAI
   apache1=<ip address>
   apache2=<ip address>
 
-#################   Check Result  ##################
+Check Result
+=============
 * After complete all the steps, please open your wordpress URL by using http://<nginx public ip>/wordpress, login with      your wordpress username and password.
 * Write some content in wordpress, make save and publish.
 * Now Login in to Master/Apache1 server, and stop the mariadb service and apache service.
