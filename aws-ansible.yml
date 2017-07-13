@@ -1,0 +1,55 @@
+---
+##################### Execute First Section (Create VPC, EC2 and Add Host IP as a variable)
+  - hosts: localhost
+    connection: local
+    gather_facts: no
+    roles:
+     - ec2-launch
+  - hosts: localhost
+    connection: local
+    roles:
+     - hostip
+####################  End of First Section
+####################  Second Section (Configure loadbalancer ansible server)
+#  - hosts: nginxservers
+#    roles:
+#     - nginx-lb
+#    become: yes
+#    remote_user: centos
+#  - hosts: ansibleserver
+#    roles:
+#     - ansibleserver
+#    become: yes
+#    remote_user: centos
+####################  End of Second Section
+# Execute the below script from new ansible server not from your local machine.
+####################  Third Section (Install Mariadb,apache and Configure apache server)
+#  - hosts: apache1
+#    roles:
+#     - apache
+#    become: yes
+#    remote_user: centos
+#  - hosts: apache2
+#    roles:
+#     - apache
+#    become: yes
+#    remote_user: centos
+#  - hosts: apache1
+#    roles:
+#     - master
+#     - wordpress
+#    become: yes
+#    remote_user: centos
+#  - hosts: localhost
+#    connection: local
+#    roles:
+#     - dbscript
+####################  End of Third Section
+####################  Fourth Section Configure Slave
+#  - hosts: apache2
+#    roles:
+#     - slave
+#     - wordpress-slave
+#    become: yes
+#    remote_user: centos
+####################  End of fourth Section

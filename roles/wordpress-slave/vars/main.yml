@@ -1,0 +1,22 @@
+---
+wp_db_name: wordpress 
+wp_db_user: wordpress
+wp_db_password: secret
+mysql_port: 3306
+server_hostname: www.example.com
+auto_up_disable: false
+core_update_level: true
+
+wordpress_packages:
+  - php-mysql
+  - wordpress
+  - unzip       # for installing plugins
+
+#wordpress_directory: '/usr/share/wordpress'
+wordpress_directory: '/usr/share/wordpress'
+
+wordpress_httpd_configuration: '/etc/httpd/conf.d/wordpress.conf'
+wordpress_configuration: '/usr/share/wordpress/wp-config.php'
+
+wordpress_httpd_service: '/usr/lib/systemd/system/httpd.service'
+wordpress_database: wordpress

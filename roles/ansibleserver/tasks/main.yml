@@ -1,0 +1,19 @@
+---
+- name: Install epel repo
+  shell: rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm --force
+- name: Install ansible server
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ ansible_yum_packages }}"
+- name: Upgrade pip
+  shell: pip install --upgrade pip
+- name: Install boto
+  shell: pip install boto
+- name: Install AWS-CLI
+  shell: pip install awscli
+- name: Configure Ansible Server
+  synchronize:
+    src: "/etc/ansible/"
+    dest: "/etc/ansible/"
+    recursive: yes

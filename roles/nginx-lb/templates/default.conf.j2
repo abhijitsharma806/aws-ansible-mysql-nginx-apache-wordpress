@@ -1,0 +1,11 @@
+upstream {{ nginxip }}  {
+   server {{ apache1 }};
+   server {{ apache2 }};
+ }
+server {
+   listen 80; # Listen on the external interface
+   server_name  {{ nginxip }};
+   location / {
+     proxy_pass  http://{{ nginxip }};
+   }
+ }

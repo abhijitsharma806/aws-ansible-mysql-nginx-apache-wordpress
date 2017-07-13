@@ -1,0 +1,271 @@
+---
+- name: Create an EC2 key
+  ec2_key:
+    name: "mykey"
+    region: "{{aws_region}}"
+  register: ec2_key
+
+- name: save private key
+  copy:
+    content: "{{ ec2_key.key.private_key }}" 
+    dest: "./roles/ec2-launch/mykey.pem"
+    mode: 0600
+    remote_src: True
+  when: ec2_key.changed
+   
+- name: Create VPC
+  ec2_vpc_net:
+    name: "{{ vpc_name }}"
+    cidr_block: "{{ vpc_cidr_block }}"
+    region: "{{ aws_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    state: "present"
+  register: my_vpc
+- name: Set VPC ID in variable
+  set_fact:
+    vpc_id: "{{ my_vpc.vpc.id }}"
+
+- name: Create Public Subnet [AZ-1]
+  ec2_vpc_subnet:
+    state: "present"
+    vpc_id: "{{ vpc_id }}"
+    cidr: "{{ public_subnet_1_cidr }}"
+    az: "{{ aws_region }}a"
+    region: "{{ aws_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    resource_tags:
+      Name: "Public Subnet 1"
+  register: my_public_subnet_az1
+- name: Set Public Subnet ID in variable [AZ-1]
+  set_fact:
+    public_subnet_az1_id: "{{ my_public_subnet_az1.subnet.id }}"
+- name: Create Private Subnet [AZ-1]
+  ec2_vpc_subnet:
+    state: "present"
+    vpc_id: "{{ vpc_id }}"
+    cidr: "{{ private_subnet_1_cidr }}"
+    az: "{{ aws_region }}c"
+    region: "{{ aws_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    resource_tags:
+      Name: "Private Subnet 1"
+  register: my_private_subnet_az1
+
+- name: Set Private Subnet ID in variable [AZ-1]
+  set_fact:
+    private_subnet_az1_id: "{{ my_private_subnet_az1.subnet.id }}"
+- name: Create Internet Gateway for VPC
+  ec2_vpc_igw:
+    vpc_id: "{{ vpc_id }}"
+    region: "{{ aws_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    state: "present"
+  register: my_vpc_igw
+
+- name: Set Internet Gateway ID in variable
+  set_fact:
+    igw_id: "{{ my_vpc_igw.gateway_id }}"
+- name: Setup AWS CLI (1/3)
+  shell: >
+    aws configure set aws_access_key_id "{{ aws_access_key }}"
+
+- name: Setup AWS CLI (2/3)
+  shell: >
+    aws configure set aws_secret_access_key "{{ aws_secret_key }}"
+
+- name: Setup AWS CLI (3/3)
+  shell: >
+    aws configure set region {{ aws_region }}
+
+- name: Create Elastic IP [AZ-1]
+  shell: >
+      aws ec2 allocate-address --domain vpc --query AllocationId | tr -d '"'
+  register: eip_az1
+
+- name: Set EIP in variable [AZ-1]
+  set_fact:
+    my_eip_az1: "{{ eip_az1.stdout }}"
+- name: Create NAT Gateway [AZ-1]
+  shell: >
+    aws ec2 create-nat-gateway \
+    --subnet-id {{ public_subnet_az1_id }} \
+    --allocation-id {{ my_eip_az1 }} \
+    --query NatGateway.NatGatewayId | tr -d '"'
+  register: my_nat_gateway_z1
+
+- name: Set Nat Gateway ID in variable [AZ-1]
+  set_fact:
+    nat_gateway_az1_id: "{{ my_nat_gateway_z1.stdout }}"
+- pause: seconds=5
+- name: Set up public subnet route table
+  ec2_vpc_route_table:
+    vpc_id: "{{ vpc_id }}"
+    region: "{{ aws_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    tags:
+      Name: "Public"
+    subnets:
+      - "{{ public_subnet_az1_id }}"
+    routes:
+      - dest: "0.0.0.0/0"
+        gateway_id: "{{ igw_id }}"
+- name: Set up private subnet route table [AZ-1]
+  ec2_vpc_route_table:
+    vpc_id: "{{ vpc_id }}"
+    region: "{{ aws_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    tags:
+      Name: "Private 1"
+    subnets:
+      - "{{ private_subnet_az1_id }}"
+    routes:
+      - dest: "0.0.0.0/0"
+        gateway_id: "{{ nat_gateway_az1_id }}"
+- name: Create Main Security Group
+  ec2_group:
+    name: "Main_Security Group"
+    description: "Main_security_Group"
+    vpc_id: "{{ vpc_id }}"
+    region: "{{ aws_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    rules:
+      - proto: "tcp"
+        from_port: "22"
+        to_port: "22"
+        cidr_ip: "{{ my_ip }}/0"
+      - proto: "tcp"
+        from_port: "80"
+        to_port: "80"
+        cidr_ip: "{{ my_ip }}/0"
+      - proto: "tcp"
+        from_port: "443"
+        to_port: "443"
+        cidr_ip: "{{ my_ip }}/0"
+      - proto: "tcp"
+        from_port: "3306"
+        to_port: "3306"
+        cidr_ip: "{{ my_ip }}/0"
+  register: my_main_sg
+- name: Set Main SG ID
+  set_fact:
+    main_sg_id: "{{ my_main_sg.group_id }}"
+- name: Ec2 - Nginx Server - Launch
+  ec2:
+    key_name: "mykey"
+    instance_type: "{{ec2_instance_type}}"
+    image: "{{ec2_image}}"
+    vpc_subnet_id: "{{ public_subnet_az1_id }}"
+    group_id: "{{ main_sg_id }}"
+    assign_public_ip: True
+    wait: true
+    region: "{{aws_region}}"
+    instance_tags: '{"Name":"{{ec2_nginx_Name}}","Environment":"{{ec2_tag_Environment}}"}'
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+  register: ec2
+- name: See ec2 value
+  debug: var=ec2
+- name: Wait for Nginix Server SSH Service
+  wait_for:
+    host: "{{ item.public_ip }}"
+    port: 22
+    delay: 120
+  with_items: "{{ ec2.instances }}"
+- name: Save Nginx IP to inventory file
+  copy:
+    content: "[nginxservers]{{'\n'}}{{ item.public_ip }}" 
+    dest: /etc/ansible/hosts
+  with_items: "{{ ec2.instances }}"
+
+- name: Ec2 - Ansible Server - Launch
+  ec2:
+    key_name: "mykey"
+    instance_type: "{{ec2_instance_type}}"
+    image: "{{ec2_image}}"
+    vpc_subnet_id: "{{ public_subnet_az1_id }}"
+    group_id: "{{ main_sg_id }}"
+    assign_public_ip: True
+    wait: true
+    region: "{{aws_region}}"
+    instance_tags: '{"Name":"{{ec2_ansible_Name}}","Environment":"{{ec2_tag_Environment}}"}'
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+  register: ec2
+- name: See ec2 value
+  debug: var=ec2
+- name: Wait for Ansible Server SSH Service
+  wait_for:
+    host: "{{ item.public_ip }}"
+    port: 22
+    delay: 120
+  with_items: "{{ ec2.instances }}"
+- name: Adding Ansible Server instance IP to host file
+  lineinfile:
+    dest: /etc/ansible/hosts
+    regexp: "^nginxservers"
+    insertbefore: "^[nginxservers]"
+    line: "[ansibleserver]{{'\n'}}{{ item.public_ip }}"
+  with_items: "{{ ec2.instances }}"
+
+- name: Ec2 - Apache One - Launch
+  ec2:
+    key_name: "mykey"
+    instance_type: "{{ec2_instance_type}}"
+    image: "{{ec2_image}}"
+    vpc_subnet_id: "{{ private_subnet_az1_id }}"
+    group_id: "{{ main_sg_id }}"
+    assign_public_ip: no
+    wait: true
+    region: "{{aws_region}}"
+    instance_tags: '{"Name":"{{ec2_apache_Name}}","Environment":"{{ec2_tag_Environment}}"}'
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+  register: ec2
+- name: See ec2 value
+  debug: var=ec2
+- name: Wait for Apache One SSH Service
+  wait_for:
+     timeout: 120
+
+- name: Adding Apache One instance IP to host file
+  lineinfile:
+    dest: /etc/ansible/hosts
+    regexp: "^ansibleserver"
+    insertbefore: "^[ansibleserver]"
+    line: "[apache1]{{'\n'}}{{ item.private_ip }}"
+  with_items: "{{ ec2.instances }}"
+- name: Ec2 - Apache-2- Launch
+  ec2:
+    key_name: "mykey"
+    instance_type: "{{ec2_instance_type}}"
+    image: "{{ec2_image}}"
+    vpc_subnet_id: "{{ private_subnet_az1_id }}"
+    group_id: "{{ main_sg_id }}"
+    assign_public_ip: no
+    wait: true
+    region: "{{aws_region}}"
+    instance_tags: '{"Name":"{{ec2_apache_Name}}","Environment":"{{ec2_tag_Environment}}"}'
+    aws_access_key: "{{aws_access_key}}"
+    aws_secret_key: "{{aws_secret_key}}"
+  register: ec2
+- name: See ec2 value
+  debug: var=ec2
+- name: Wait for Aapace two SSH Service
+  wait_for:
+    timeout: 120
+  with_items: "{{ ec2.instances }}"
+
+- name: Adding Apache two instance IP to host file
+  lineinfile:
+    dest: /etc/ansible/hosts
+    regexp: "^apache1"
+    insertbefore: "^[apache1]{{'\n'}}"
+    line: "[apache2]{{'\n'}}{{ item.private_ip }}"
+  with_items: "{{ ec2.instances }}"

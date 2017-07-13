@@ -1,0 +1,21 @@
+---
+- name: Install mariadb
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ mysql_yum_packages }}"
+- name: enable mariadb
+  service:
+    name: "{{ mysql_service_name }}"
+    state: started
+- name: Copy Script
+  copy:
+    src: /etc/ansible/roles/master/secureinstall.sh
+    dest: /tmp/
+    owner: root
+    group: root
+    mode: 0777
+- name: Configure Secure installation
+  shell: sh /tmp/secureinstall.sh
+- name: Configure Secure installation
+  shell: rm -rf /tmp/secureinstall.sh

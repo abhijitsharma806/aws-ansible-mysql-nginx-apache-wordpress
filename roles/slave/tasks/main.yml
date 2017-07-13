@@ -1,0 +1,116 @@
+---
+- name: Install mariadb
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ mysql_yum_packages }}"
+- name: enable mariadb
+  service:
+    name: "{{ mysql_service_name }}"
+    state: started
+#- name: Stop  mariadb
+#  service:
+#    name: "{{ mysql_service_name }}"
+#    state: stopped
+#- name: Create directory
+#  file:
+#    path: /opt/mysqlfiles
+#    state: directory
+#    mode: 0755
+#- name: Move MySQL Dir
+#  command: mv /var/lib/mysql/ /opt/mysqlfiles/
+#- name: Create directory
+#  file:
+#    path: /var/lib/mysql/
+#    state: directory
+#    mode: 0755
+#    owner: mysql
+#    group: mysql
+#- name: Start  mariadb
+#  service:
+#    name: "{{ mysql_service_name }}"
+#    state: started
+- name: MYSQL_USER | Update mysql root password for all root accounts
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    password: "{{ mysql_root_password }}"
+  with_items:
+    - "{{ ansible_hostname }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
+- name: Add .my.cnf
+  template:
+    src: .my.cnf.j2
+    dest: /root/.my.cnf
+    owner: root
+    group: root
+    mode: 0600
+- name: Add my.cnf
+  template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf
+    owner: root
+    group: root
+    mode: 0644
+- name: MYSQL_USER | Remove all anonymous users
+  mysql_user:
+    name: ''
+    host: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ ansible_hostname }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
+        
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+  changed_when: False
+
+- name: Remove anonymous users
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - DELETE FROM mysql.user WHERE User=''
+  changed_when: False
+
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+  changed_when: False
+
+- name: Import sql file
+  mysql_db:
+    state: import
+    name: all
+    target: /tmp/mariadbdump.sql
+- mysql_replication:
+    mode: changemaster
+    master_host: "{{ master_ip }}"
+    master_user: replica
+    master_password: password
+    master_log_pos: "{{ pos_value}}"
+    master_log_file: "{{ log_file_name }}"
+- mysql_replication:
+    mode: startslave
+- name: Stop  mariadb
+  service:
+    name: "{{ mysql_service_name }}"
+    state: stopped
+  tags: filecopy
+- name: Start  mariadb
+  service:
+    name: "{{ mysql_service_name }}"
+    state: started
+  tags: filecopy
+- name: show slave status
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - show slave status\G
+  changed_when: False
+  register: db
+- debug: var=db

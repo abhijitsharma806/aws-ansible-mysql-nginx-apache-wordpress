@@ -1,0 +1,25 @@
+---
+- name: copy repository
+  template:
+    src: nginx.repo.j2
+    dest: /etc/yum.repos.d/nginx.repo
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r 
+- name: install nginx
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ nginx_yum_packages }}"
+- name: enable nginx
+  service:
+    name: "{{ nginx_service_name }}"
+    state: started
+- name: copy nginx configuration files
+  template:
+    src: default.conf.j2
+    dest: /etc/nginx/conf.d/default.conf
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  notify: restart nginx

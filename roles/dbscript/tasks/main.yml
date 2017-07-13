@@ -1,0 +1,3 @@
+---
+- name: export host IPs to scriptfiles
+  shell: sh /etc/ansible/roles/master/dbscript.sh

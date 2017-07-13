@@ -1,0 +1,36 @@
+Alias /wordpress /usr/share/wordpress
+
+# Access is only allowed via local access
+# Change this once configured
+
+<Directory /usr/share/wordpress>
+  AllowOverride Options
+  Require all granted
+  <IfModule mod_authz_core.c>
+    # Apache 2.4
+    Require local
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    # Apache 2.2
+    Order Deny,Allow
+    Deny from All
+    Allow from 127.0.0.1
+    Allow from ::1
+ </IfModule>
+</Directory>
+
+<Directory /usr/share/wordpress/wp-content/uploads>
+  # Deny access to any php file in the uploads directory
+  <FilesMatch "\.(php)$">
+    Order Deny,Allow
+    Deny from all
+  </FilesMatch>
+</Directory>
+
+<Directory /usr/share/wordpress/wp-content/plugins/akismet>
+  # Deny access to any php file in the akismet directory
+  <FilesMatch "\.(php|txt)$">
+    Order Deny,Allow
+    Deny from all
+  </FilesMatch>
+</Directory>

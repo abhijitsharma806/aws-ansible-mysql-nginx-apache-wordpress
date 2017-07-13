@@ -1,0 +1,133 @@
+---
+- name: Install mariadb
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ mysql_yum_packages }}"
+- name: enable mariadb
+  service:
+    name: "{{ mysql_service_name }}"
+    state: started
+#- name: Stop  mariadb
+#  service:
+#    name: "{{ mysql_service_name }}"
+#    state: stopped
+#- name: Create directory
+#  file:
+#    path: /opt/mysqlfiles
+#    state: directory
+#    mode: 0755
+#- name: Move MySQL Dir
+#  command: mv /var/lib/mysql/ /opt/mysqlfiles/
+#- name: Create directory
+#  file:
+#    path: /var/lib/mysql/
+#    state: directory
+#    mode: 0755
+#    owner: mysql
+#    group: mysql
+
+#- name: Start  mariadb
+#  service:
+#    name: "{{ mysql_service_name }}"
+#    state: started
+- name: MYSQL_USER | Update mysql root password for all root accounts
+  mysql_user:
+    name: root
+    host: "{{ item }}"
+    password: "{{ mysql_root_password }}"
+  with_items:
+    - "{{ ansible_hostname }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
+- name: Add .my.cnf
+  template:
+    src: .my.cnf.j2
+    dest: /root/.my.cnf
+    owner: root
+    group: root
+    mode: 0600
+- name: Add my.cnf
+  template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf
+    owner: root
+    group: root
+    mode: 0644
+- name: MYSQL_USER | Remove all anonymous users
+  mysql_user:
+    name: ''
+    host: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ ansible_hostname }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
+        
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+  changed_when: False
+
+- name: Remove anonymous users
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - DELETE FROM mysql.user WHERE User=''
+  changed_when: False
+
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+  changed_when: False
+- name: Create Replica User
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - grant replication slave on *.* to replica@'%' identified by 'password';
+  changed_when: False
+
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+  changed_when: False
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - flush tables with read lock;
+  changed_when: False
+- name: Dump all databases to hostname.sql
+  mysql_db:
+    state: dump
+    name: all
+    target: /tmp/mariadbdump.sql
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - unlock tables
+  changed_when: False
+  tags: filecopy
+- name: Stop  mariadb
+  service:
+    name: "{{ mysql_service_name }}"
+    state: stopped
+- name: Start  mariadb
+  service:
+    name: "{{ mysql_service_name }}"
+    state: started
+- name: Show Variables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - show master status
+  changed_when: False
+  register: db
+- debug: var=db
+  tags: filecopy
+- name: Save Log and Pos details to file
+  copy:
+    content: "{{ item.stdout_lines }}"
+    dest: /tmp/mariadb_dbresult.txt
+  with_items: "{{ db.results }}"

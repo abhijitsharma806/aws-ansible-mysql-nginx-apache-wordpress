@@ -1,0 +1,3 @@
+---
+- name: export host IPs hosts
+  shell: sh /etc/ansible/roles/nginx-lb/script.sh

@@ -1,0 +1,9 @@
+---
+mysql_service_name: mariadb
+mysql_yum_packages:
+  - mariadb
+  - mariadb-server
+  - mariadb-libs
+  - MySQL-python
+  - perl-DBD-MySQL
+mysql_root_password: redhat7

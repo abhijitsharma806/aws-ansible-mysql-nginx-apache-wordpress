@@ -1,0 +1,4 @@
+---
+ansible_yum_packages:
+ - ansible
+ - python-pip

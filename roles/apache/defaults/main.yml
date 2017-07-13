@@ -1,0 +1,4 @@
+---
+apache_service_name: httpd
+apache_yum_packages:
+ - httpd
