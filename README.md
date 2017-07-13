@@ -74,31 +74,30 @@ For better understand I have created multiple roles. You can find the roles in m
 * wordpress-slave - Configure Wordpress for MySQL slave Instance.
 
 Role Variables
---------------
-mysql_root_password: redhat7
-wordpress_database_host: localhost
-wordpress_database: wordpress
-wordpress_user: wordpress
-wordpress_password: wordpress
-aws_access_key: " Your IAM Access Key"
-aws_secret_key: "Your IAM Secret Key"
-aws_region: "eu-west-1"
-vpc_name: "My_VPC"
-vpc_cidr_block: "172.16.0.0/16"
-public_subnet_1_cidr: "172.16.0.0/24"
-private_subnet_1_cidr: "172.16.1.0/24"
-ec2_image: "ami-0d063c6b"
-ec2_instance_type: "t2.micro"
-ec2_nginx_Name: "Nginx_Server"
-ec2_ansible_Name: "Ansible_Server"
-ec2_apache_Name: "Apache_Server"
-ec2_tag_Environment: "Dev"
+==============
+* mysql_root_password: redhat7
+* wordpress_database_host: localhost
+* wordpress_database: wordpress
+* wordpress_user: wordpress
+* wordpress_password: wordpress
+* aws_access_key: " Your IAM Access Key"
+* aws_secret_key: "Your IAM Secret Key"
+* aws_region: "eu-west-1"
+* vpc_name: "My_VPC"
+* vpc_cidr_block: "172.16.0.0/16"
+* public_subnet_1_cidr: "172.16.0.0/24"
+* private_subnet_1_cidr: "172.16.1.0/24"
+* ec2_image: "ami-0d063c6b"
+* ec2_instance_type: "t2.micro"
+* ec2_nginx_Name: "Nginx_Server"
+* ec2_ansible_Name: "Ansible_Server"
+* ec2_apache_Name: "Apache_Server"
+* ec2_tag_Environment: "Dev"
 
 * To know more about variables please check the "roles/<role name>/default/main.yml" or "roles/<role name>/vars/main.yml"
 
-==============================================================================
-#######################   HOW TO RUN THE PLAYBOOK? ###########################
-==============================================================================
+######   HOW TO RUN THE PLAYBOOK? ######
+========================================
 
 * In this ansible my main playbook name is "aws-ansible.yml", located in "/etc/ansible/aws-ansible.yml"
 * I have devided my main playbook to 4 sections.
@@ -188,11 +187,12 @@ ec2_tag_Environment: "Dev"
     - In this wordpress installation we are not creating the wordpress user, because it is a slave readonly server.
     - After start the MySQL slave replication service it will read the data from own db.
   
-==============================================================================
-----------IMPORTANT-----------------------------------------------------------
-INCASE OF YOU ARE UNABLE TO COMPLETE THE ABOVE ROLES DUE TO SOME REASON, PLEASE DELETE ALL THE CREATED VPC AND EC2        INSTANCES BEFORE RUN THE PLAYBOOK AGAIN
-----------IMPORTANT-----------------------------------------------------------
-==============================================================================
+====================================
+----------IMPORTANT----------------
+INCASE OF IF YOU ARE UNABLE TO COMPLETE THE ABOVE ROLES DUE TO SOME REASON,
+PLEASE DELETE ALL THE CREATED VPC AND EC2 INSTANCES BEFORE RUN THE PLAYBOOK AGAIN
+----------IMPORTANT---------------
+==================================
 * If you got any error please delete everything and run it from scratch.
 * Delete newly Created EC2, VPC, and remove the existing entries from below files.
 * Please verify that all the files have proper entries.
@@ -211,11 +211,7 @@ INCASE OF YOU ARE UNABLE TO COMPLETE THE ABOVE ROLES DUE TO SOME REASON, PLEASE 
   apache1=<ip address>
   apache2=<ip address>
 
-----------------------------------------------------
-----------------------------------------------------
 #################   Check Result  ##################
-----------------------------------------------------
-----------------------------------------------------
 * After complete all the steps, please open your wordpress URL by using http://<nginx public ip>/wordpress, login with      your wordpress username and password.
 * Write some content in wordpress, make save and publish.
 * Now Login in to Master/Apache1 server, and stop the mariadb service and apache service.
