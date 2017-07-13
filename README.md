@@ -167,7 +167,7 @@ HOW TO RUN THE PLAYBOOK?
 
   * After complete Third Section configure the Wordpress admin part.
   * Open "cat /etc/ansible/hosts", here you can see "[nginxserver]" IP.
-  * Open it from your browser http://nginxserver ip/wordpress.
+  * Open it from your browser http:// nginxserver ip /wordpress.
   * Provide Title, admin username and copy the password for future login.
   * After complete Third Section, comment Third Section and uncomment the Fourth section and run the playbook.
 
@@ -194,24 +194,24 @@ INCASE OF IF YOU ARE UNABLE TO COMPLETE THE ABOVE ROLES DUE TO SOME REASON, PLEA
 * Delete newly Created EC2, VPC, and remove the existing entries from below files.
 * Please verify that all the files have proper entries.
 * Remove all host entries from /etc/ansible/hosts and keep only.
-  [localhost]
-  127.0.0.1
+  * [localhost]
+  * 127.0.0.1
 * Remove below lines from /etc/ansible/roles/nginx-lb/defaults/main.yml
-  apache1:ip address
-  apache2:ip address
-  nginxip:ip address
+  * apache1:ip address
+  * apache2:ip address
+  * nginxip:ip address
 * Remove below enties from /etc/ansible/roles/slave/defaults/main.yml
   * master_ip: 172.16.1.199
   * log_file_name: mysql-bin.000001
   * pos_value: 245
 * Remove below enties from /etc/ansible/roles/master/dbscript.sh
-  apache1=ip address
-  apache2=ip address
+  * apache1=ip address
+  * apache2=ip address
 
 Check Result
 =============
-* After complete all the steps, please open your wordpress URL by using http://nginx public ip/wordpress, login with      your wordpress username and password.
+* After complete all the steps, please open your wordpress URL by using http:// nginx public ip /wordpress, login with      your wordpress username and password.
 * Write some content in wordpress, make save and publish.
 * Now Login in to Master/Apache1 server, and stop the mariadb service and apache service.
 * Please do not stop the Slave/Apache2 service.
-* In other browser please try to open the wordpress http://nginx public ip/wordpress, now you can see the new content.
+* In other browser please try to open the wordpress http:// nginx public ip /wordpress, now you can see the new content.
