@@ -15,7 +15,8 @@ Install and Configure AWS(EC2-VPC)-MySQL-Nginx-Apache-Wordpress by Ansible
 6. Setup Wordpress in the Apache machine. Wordpress should write to master. Replication should happen to copy the data from master to slave.
 
 Note: I am using one more extra ansible server to complete the task (4,5 & 6).
-      Before run this playbook please backup your existing ansible server roles, plabooks, host, ansible.cfg etc...
+
+* Before run this playbook please backup your existing ansible server roles, plabooks, host, ansible.cfg etc...
 
 Install below Softwares before run the playbook in Local Ansible System.
 ========================================================================
@@ -48,10 +49,10 @@ AWS Requirements
 * I choose VPC CIDR = 172.16.0.0/16, Public is = 172.16.0.0/24, Private is = 172.16.1.0/24
 * To change the privatekey creation location edit this file "/etc/ansible/roles/ec2-launch/tasks/main.yml"
 * Use your aws access and secret key in this file "/etc/ansible/roles/ec2-launch/vars/main.yml"
-  aws_access_key: " Your IAM Access Key"
-  aws_secret_key: "Your IAM Secret Key"
+  * aws_access_key: " Your IAM Access Key"
+  * aws_secret_key: "Your IAM Secret Key"
 * I choose "eu-west-1" in this file "/etc/ansible/roles/ec2-launch/vars/main.yml"
-  aws_region: "eu-west-1" 
+  * aws_region: "eu-west-1" 
 * If you want to list more region of AWS, please vist the link - http://docs.aws.amazon.com/general/latest/gr/rande.html
 * For more modification of AWS-(EC2/VPC) please use this file "/etc/ansible/roles/ec2-launch/vars/main.yml" and this link - http://docs.ansible.com/ansible/list_of_all_modules.html
 * For OS I am Using CentOS 7. Centos Default User Name is = "centos" with sudo privilages.
