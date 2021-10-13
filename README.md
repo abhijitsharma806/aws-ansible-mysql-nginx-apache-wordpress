@@ -216,3 +216,6 @@ Check Result
 * Now Login in to Master/Apache1 server, and stop the mariadb service and apache service.
 * Please do not stop the Slave/Apache2 service.
 * In other browser please try to open the wordpress http:// nginx public ip /wordpress, now you can see the new content.
+
+
+Thanks!
